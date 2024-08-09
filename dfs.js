@@ -5,6 +5,9 @@ var cols = canvasWidth / tileSize;
 var rows = canvasHeight / tileSize;
 var grid;
 
+let execute = false;
+let freeDraw = true;
+
 // Variable to indicate if simulation is running.
 // When false, prevents more inputs until sim is done.
 var RUNNING = false;
@@ -140,6 +143,8 @@ async function dfs_recursive(tile, r, g, b){
 function setup(){
     print(`rows ${rows} cols ${cols}`);
     grid = new Grid(rows, cols);
+    execute = createCheckbox('dfs');
+    freeDraw = createCheckbox('free draw');
 }
 
 function draw(){
@@ -147,6 +152,12 @@ function draw(){
     background(0);
     grid.draw();
     // noLoop();
+    if(freeDraw.checked() && mouseIsPressed){
+        let x = floor(mouseX / tileSize);
+        let y = floor(mouseY / tileSize);
+        chosenTile = grid.getTile(x, y);
+        if(chosenTile != null) chosenTile.setColour(0, 0, 0);
+    }
 }
 
 function mousePressed(){
@@ -156,7 +167,7 @@ function mousePressed(){
     let y = floor(mouseY / tileSize);
     print(x, y);
     let chosenTile = grid.getTile(x, y);
-    dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+    if(execute.checked()) dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
 }
 
 // TODO : Grid and Tiles are set up. Next is to:
