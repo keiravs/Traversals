@@ -1,5 +1,5 @@
-var canvasHeight = 400;
-var canvasWidth = 400;
+var canvasHeight = 300;
+var canvasWidth = 300;
 var tileSize = 5;
 var cols = canvasWidth / tileSize;
 var rows = canvasHeight / tileSize;
@@ -32,6 +32,10 @@ class Tile{
 
     compareColour(r, g, b){
         return this.red == r && this.green == g && this.blue == b;
+    }
+
+    compareColourTile(other){
+        return this.red == other.red && this.green == other.green && this.blue == other.blue;
     }
 
     draw(){
@@ -129,21 +133,60 @@ async function dfs_recursive(tile, r, g, b){
     if(tile.checked) return;
     if(!tile.compareColour(r, g, b)) return;
     tile.checked = true;
-    tile.setColour(0, 0, 200);
+    tile.setColour(0, 100, 100);
     await sleep(100);
+    // draw();
 
     dfs_recursive(grid.getUpNeighbour(tile), r, g, b);
-    dfs_recursive(grid.getRightNeighbour(tile), r, g, b);
     dfs_recursive(grid.getDownNeighbour(tile), r, g, b);
+    dfs_recursive(grid.getRightNeighbour(tile), r, g, b);
     dfs_recursive(grid.getLeftNeighbour(tile), r, g, b);
 
     return;
 }
 
+async function bfs(tile, r, g, b){
+    if(tile == null) return;
+    if(tile.checked) return;
+    tile.checked = true;
+    const queue = [tile];
+
+    while(queue.length > 0){
+        const current = queue.shift();
+        current.setColour(0, 100, 100);
+        await sleep(10);
+        let upN = grid.getUpNeighbour(current);
+        if(upN!=null && !upN.checked && upN.compareColour(r, g, b)){
+            upN.checked = true;
+            queue.push(upN);
+        }
+
+        let rightN = grid.getRightNeighbour(current);
+        if(rightN!=null &&!rightN.checked && rightN.compareColour(r, g, b)){
+            rightN.checked = true;
+            queue.push(rightN);
+        }
+
+        let downN = grid.getDownNeighbour(current);
+        if(downN!=null &&!downN.checked && downN.compareColour(r, g, b)){
+            downN.checked = true;
+            queue.push(downN);
+        }
+
+        let leftN = grid.getLeftNeighbour(current);
+        if(leftN!=null && !leftN.checked && leftN.compareColour(r, g, b)){
+            leftN.checked = true;
+            queue.push(leftN);
+        }
+    }
+    print("COMPLETED FROM WITHIN BFS");
+}
+
 function setup(){
     print(`rows ${rows} cols ${cols}`);
     grid = new Grid(rows, cols);
-    execute = createCheckbox('dfs');
+    execute_dfs = createCheckbox('dfs');
+    execute_bfs = createCheckbox('bfs');
     freeDraw = createCheckbox('free draw');
 }
 
@@ -165,9 +208,10 @@ function mousePressed(){
     // print(mouseX, mouseY);
     let x = floor(mouseX / tileSize);
     let y = floor(mouseY / tileSize);
-    print(x, y);
     let chosenTile = grid.getTile(x, y);
-    if(execute.checked()) dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+    if(execute_dfs.checked()) dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+    if(execute_bfs.checked()) bfs(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+    print("Completed");
 }
 
 // TODO : Grid and Tiles are set up. Next is to:
