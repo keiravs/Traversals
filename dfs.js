@@ -1,6 +1,6 @@
-var canvasHeight = 300;
-var canvasWidth = 300;
-var tileSize = 5;
+var canvasHeight = 1000;
+var canvasWidth = 1000;
+var tileSize = 20;
 var cols = canvasWidth / tileSize;
 var rows = canvasHeight / tileSize;
 var grid;
@@ -50,9 +50,12 @@ class Grid{
         this.rows = rows;
         this.cols = cols;
         this.tiles = [];
-        this.generateTiles();
+        this.scale = 0.1;
+        // this.generateTiles();
+        this.generateDepthMap();
     }
 
+    // Method to generate an array of tiles of the same colour.
     generateTiles(){
         for(let x = 0; x < this.cols; x += 1){
             for(let y = 0; y < this.rows; y += 1){
@@ -60,6 +63,42 @@ class Grid{
                 this.tiles[y*this.cols + x] = newTile;
             }
         }
+        print(this.tiles.length);
+    }
+
+    // Method used to generate a depth map. Uses Perlin noise to create tiles of varying colour representing different altitudes.
+    // Default method called when generating tiles.
+    generateDepthMap(){
+        let possibleVals = [30, 80, 120, 180, 210, 240];
+        for(let y=0; y<this.rows; y++){
+            for(let x=0; x<this.cols; x++){
+                let noiseValue = noise(x * this.scale, y*this.scale);
+                let alt = map(noiseValue, 0, 1, 0, 255);
+                let mapped_alt = this.mapToNearestVal(alt, possibleVals);       // map value to nearset value in possibleVals
+                let newTile = new Tile(x, y, x*tileSize, y*tileSize, mapped_alt, mapped_alt, mapped_alt);
+                this.tiles[y*this.cols + x] = newTile;
+            }
+        }
+    }
+
+    // Helper function to map a val to nearest possible value in values. (Used to limit the number of possible colours from the perlins noise).
+    mapToNearestVal(val, values){
+        let diff = 10000;
+        let chosen_val;
+        values.forEach((value) => {
+            let difference = abs(value - val);
+            if(difference < diff){
+                diff = difference;
+                chosen_val = value;
+            }
+        })
+        return chosen_val;
+    }
+
+    reset(){
+        window.location.reload();
+        // this.tiles.length = 0;
+        // this.generateDepthMap();
     }
 
     getTile(x, y){
@@ -95,39 +134,6 @@ const sleep = (millis) => {
     return new Promise(resolve => setTimeout(resolve, millis)) 
 }
 
-async function dfs(x, y){
-    RUNNING = true;
-    let chosenTile = grid.getTile(x, y);
-    let colour = [chosenTile.red, chosenTile.green, chosenTile.blue];
-    let queue = [chosenTile];
-    
-    while(queue.length > 0){
-        let cTile = queue.pop();
-        cTile.setColour(0, 0, 255);
-        cTile.checked = true;
-        // Getting the neighbours
-        let upTile = grid.getUpNeighbour(cTile);
-        if(upTile != null && !upTile.checked && upTile.compareColour(colour[0], colour[1], colour[2])){
-            queue.push(upTile);
-        }
-        let rightTile = grid.getRightNeighbour(cTile);
-        if(rightTile != null && !rightTile.checked && rightTile.compareColour(colour[0], colour[1], colour[2])){
-            queue.push(rightTile);
-        }
-        let downTile = grid.getDownNeighbour(cTile);
-        if(downTile != null && !downTile.checked && downTile.compareColour(colour[0], colour[1], colour[2])){
-            queue.push(downTile);
-        }
-        let leftTile = grid.getLeftNeighbour(cTile);
-        if(leftTile != null && !leftTile.checked && leftTile.compareColour(colour[0], colour[1], colour[2])){
-            queue.push(leftTile);
-        }
-        await sleep(1);
-    }
-    print("dfs complete");
-    RUNNING = false;
-}
-
 async function dfs_recursive(tile, r, g, b){
     if(tile == null) return;
     if(tile.checked) return;
@@ -146,6 +152,7 @@ async function dfs_recursive(tile, r, g, b){
 }
 
 async function bfs(tile, r, g, b){
+    RUNNING = true;
     if(tile == null) return;
     if(tile.checked) return;
     tile.checked = true;
@@ -153,8 +160,7 @@ async function bfs(tile, r, g, b){
 
     while(queue.length > 0){
         const current = queue.shift();
-        current.setColour(0, 100, 100);
-        await sleep(10);
+        current.setColour(100, 0, 100);
         let upN = grid.getUpNeighbour(current);
         if(upN!=null && !upN.checked && upN.compareColour(r, g, b)){
             upN.checked = true;
@@ -178,8 +184,9 @@ async function bfs(tile, r, g, b){
             leftN.checked = true;
             queue.push(leftN);
         }
+        await sleep(10);
     }
-    print("COMPLETED FROM WITHIN BFS");
+    RUNNING = false;
 }
 
 function setup(){
@@ -188,6 +195,8 @@ function setup(){
     execute_dfs = createCheckbox('dfs');
     execute_bfs = createCheckbox('bfs');
     freeDraw = createCheckbox('free draw');
+    reset_btn = createButton('Reset');
+    reset_btn.mousePressed(reset);
 }
 
 function draw(){
@@ -209,15 +218,17 @@ function mousePressed(){
     let x = floor(mouseX / tileSize);
     let y = floor(mouseY / tileSize);
     let chosenTile = grid.getTile(x, y);
-    if(execute_dfs.checked()) dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
-    if(execute_bfs.checked()) bfs(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
-    print("Completed");
+    if(chosenTile){
+        if(execute_dfs.checked()) dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+        if(execute_bfs.checked()) bfs(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+    }
+}
+
+function reset(){
+    if(RUNNING) return;
+    grid.reset();
 }
 
 // TODO : Grid and Tiles are set up. Next is to:
 /**
- * 1) Implement functionality to pick a specific tile using mouse.
- * 2) Implement DFS and BFS functions.
- * 3) Add GUI toggle to allow selection of specific algo.
- * 4) Define function to generate sample maps.
  */
