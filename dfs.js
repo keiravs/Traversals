@@ -192,9 +192,9 @@ async function bfs(tile, r, g, b){
 function setup(){
     print(`rows ${rows} cols ${cols}`);
     grid = new Grid(rows, cols);
-    execute_dfs = createCheckbox('dfs');
-    execute_bfs = createCheckbox('bfs');
-    freeDraw = createCheckbox('free draw');
+    execute_dfs = createCheckbox('Depth-First');
+    execute_bfs = createCheckbox('Breadth-First');
+    // freeDraw = createCheckbox('free draw');
     reset_btn = createButton('Reset');
     reset_btn.mousePressed(reset);
 }
@@ -204,12 +204,12 @@ function draw(){
     background(0);
     grid.draw();
     // noLoop();
-    if(freeDraw.checked() && mouseIsPressed){
-        let x = floor(mouseX / tileSize);
-        let y = floor(mouseY / tileSize);
-        chosenTile = grid.getTile(x, y);
-        if(chosenTile != null) chosenTile.setColour(0, 0, 0);
-    }
+    // if(freeDraw.checked() && mouseIsPressed){
+    //     let x = floor(mouseX / tileSize);
+    //     let y = floor(mouseY / tileSize);
+    //     chosenTile = grid.getTile(x, y);
+    //     if(chosenTile != null) chosenTile.setColour(0, 0, 0);
+    // }
 }
 
 function mousePressed(){
@@ -219,8 +219,8 @@ function mousePressed(){
     let y = floor(mouseY / tileSize);
     let chosenTile = grid.getTile(x, y);
     if(chosenTile){
-        if(execute_dfs.checked()) dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
-        if(execute_bfs.checked()) bfs(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+        if(execute_dfs.checked() && !execute_bfs.checked()) dfs_recursive(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
+        if(execute_bfs.checked() && !execute_dfs.checked()) bfs(chosenTile, chosenTile.red, chosenTile.green, chosenTile.blue);
     }
 }
 
