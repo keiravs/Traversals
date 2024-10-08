@@ -57,6 +57,7 @@ class Grid{
 
     // Method to generate an array of tiles of the same colour.
     generateTiles(){
+        this.tiles.length = 0;
         for(let x = 0; x < this.cols; x += 1){
             for(let y = 0; y < this.rows; y += 1){
                 let newTile = new Tile(x, y, x*tileSize, y*tileSize, 100, 0 ,0);
@@ -195,8 +196,10 @@ function setup(){
     execute_dfs = createCheckbox('Depth-First');
     execute_bfs = createCheckbox('Breadth-First');
     // freeDraw = createCheckbox('free draw');
-    reset_btn = createButton('Reset');
-    reset_btn.mousePressed(reset);
+    resetBtn = createButton('Reset');
+    resetBtn.mousePressed(reset);
+    blankGrid = createButton('Create Blank Grid');
+    blankGrid.mousePressed(createBlankGrid);
 }
 
 function draw(){
@@ -227,6 +230,11 @@ function mousePressed(){
 function reset(){
     if(RUNNING) return;
     grid.reset();
+}
+
+function createBlankGrid(){
+    if(RUNNING) return;
+    grid.generateTiles();
 }
 
 // TODO : Grid and Tiles are set up. Next is to:
